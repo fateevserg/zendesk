@@ -102,6 +102,11 @@ parts:
       screenshot: "https://drive.google.com/file/d/1Y6yeqp3fbfJbuq7tT8VutsLa80GZju-V/view?usp=drive_link"
       value: "Uploading {{fileName}}"
   - translation:
+      key: "new-request-form.attachemnts.file"
+      title: "[A11Y] Hidden label for screen readers informing how they can remove the file with keyboard navigation. {{fileName}} will be replaced by file name, e.g., [image.png]. Alternative English if you encounter declension issues: [Press Delete to remove the file {{fileName}}]"
+      screenshot: "https://drive.google.com/file/d/1JFVE2twzUkg-U6gGAs2EHqD-3jPvtJDA/view?usp=drive_link"
+      value: "File: {{fileName}}, press delete to remove"
+  - translation:
       key: "new-request-form.submit"
       title: "Submit button for the New Request Form"
       screenshot: "https://drive.google.com/file/d/1VuVYpxGA-uAGbvscl2WXTJ24yK5QydhZ/view?usp=drive_link"

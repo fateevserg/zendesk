@@ -55,7 +55,17 @@ export function FileListItem({
 
   return (
     <FileList.Item>
-      <File type="generic" title={fileName} onKeyDown={handleFileKeyDown}>
+      <File
+        type="generic"
+        title={fileName}
+        tabIndex={0}
+        aria-label={t(
+          "new-request-form.attachemnts.file",
+          "File: {{fileName}}, press delete to remove",
+          { fileName }
+        )}
+        onKeyDown={handleFileKeyDown}
+      >
         {file.status === "pending" ? (
           <>
             <FileNameWrapper>{fileName}</FileNameWrapper>
