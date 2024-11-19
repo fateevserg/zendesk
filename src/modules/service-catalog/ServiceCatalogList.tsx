@@ -46,32 +46,13 @@ export function ServiceCatalogList({
       try {
         const response = await fetch(
           currentCursor
-            ? `/api/v2/custom_objects/service_catalog_item/records?page[size]=16&${currentCursor}`
-            : `/api/v2/custom_objects/service_catalog_item/records?page[size]=16`
+            ? `/api/v2/help_center/service_catalog/items?page[size]=16&${currentCursor}`
+            : `/api/v2/help_center/service_catalog/items?page[size]=16`
         );
         const data = await response.json();
         if (response.ok) {
-          const records = data.custom_object_records.map(
-            ({
-              id,
-              name,
-              custom_object_fields,
-              custom_object_key,
-            }: {
-              id: number;
-              name: string;
-              custom_object_fields: { description: string; form_id: string };
-              custom_object_key: string;
-            }) => ({
-              id,
-              name,
-              description: custom_object_fields.description,
-              form_id: custom_object_fields.form_id,
-              custom_object_key,
-            })
-          );
           setMeta(data.meta);
-          setServiceCatalogItems(records);
+          setServiceCatalogItems(data.service_catalog_items);
           setIsLoading(false);
         }
       } catch (error) {
