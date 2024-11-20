@@ -1,12 +1,9 @@
 import styled from "styled-components";
-import { Button } from "@zendeskgarden/react-buttons";
-import { getColorV8 } from "@zendeskgarden/react-theming";
-import { useTranslation } from "react-i18next";
 import { useItemFormFields } from "./components/useItemFormFields";
 import { ItemRequestForm } from "./components/service-catalog-item/ItemRequestForm";
 import type { Organization } from "../ticket-fields";
-import { CollapsibleDescription } from "./components/service-catalog-item/CollapsibleDescription";
 import { useServiceCatalogItem } from "./useServiceCatalogItem";
+import { useServiceFormSubmit } from "./useServiceFormSubmit";
 
 const Container = styled.div`
   display: flex;
@@ -16,63 +13,6 @@ const Container = styled.div`
 
   @media (max-width: ${(props) => props.theme.breakpoints.md}) {
     flex-direction: column;
-  }
-`;
-
-const LeftColumn = styled.div`
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  gap: ${(props) => props.theme.space.lg};
-  margin-right: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    margin-right: 0;
-  }
-`;
-
-const FromFieldsWrapper = styled.div`
-  margin-right: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    margin-right: 0;
-  }
-`;
-
-const RightColumn = styled.div`
-  flex: 1;
-  margin-left: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    position: sticky;
-    bottom: 0;
-    margin-left: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-`;
-
-const ButtonWrapper = styled.div`
-  padding: ${(props) => props.theme.space.lg};
-  border: ${(props) => props.theme.borders.sm}
-    ${(props) => getColorV8("grey", 300, props.theme)};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    position: sticky;
-    top: 0;
-    background: ${(props) => props.theme.colors.background};
-    padding: ${(props) => props.theme.space.lg};
-    border: none;
-    border-top: ${(props) => props.theme.borders.sm}
-      ${(props) => getColorV8("grey", 300, props.theme)};
-    width: 100vw;
-    left: 0;
-    right: 0;
   }
 `;
 
@@ -101,7 +41,20 @@ export function ServiceCatalogItemPage({
     serviceCatalogItem,
     baseLocale
   );
-  const { t } = useTranslation();
+  const { submitServiceItemRequest } = useServiceFormSubmit(
+    serviceCatalogItem,
+    requestFields
+  );
+
+  const handleRequestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await submitServiceItemRequest();
+    } catch (error) {
+      console.error("Error submitting service item request:", error);
+    }
+  };
+
   const defaultOrganizationId =
     organizations.length > 0 && organizations[0]?.id
       ? organizations[0]?.id?.toString()
@@ -110,33 +63,18 @@ export function ServiceCatalogItemPage({
   return (
     <Container>
       {serviceCatalogItem && (
-        <>
-          <LeftColumn>
-            <CollapsibleDescription
-              title={serviceCatalogItem.name}
-              description={serviceCatalogItem.description}
-            />
-            <FromFieldsWrapper>
-              <ItemRequestForm
-                requestFields={requestFields}
-                baseLocale={baseLocale}
-                hasAtMentions={hasAtMentions}
-                userRole={userRole}
-                userId={userId}
-                brandId={brandId}
-                defaultOrganizationId={defaultOrganizationId}
-                handleChange={handleChange}
-              />
-            </FromFieldsWrapper>
-          </LeftColumn>
-          <RightColumn>
-            <ButtonWrapper>
-              <Button isPrimary size="large" isStretched>
-                {t("service-catalog.item.submit-button", "Submit request")}
-              </Button>
-            </ButtonWrapper>
-          </RightColumn>
-        </>
+        <ItemRequestForm
+          requestFields={requestFields}
+          serviceCatalogItem={serviceCatalogItem}
+          baseLocale={baseLocale}
+          hasAtMentions={hasAtMentions}
+          userRole={userRole}
+          userId={userId}
+          brandId={brandId}
+          defaultOrganizationId={defaultOrganizationId}
+          handleChange={handleChange}
+          onSubmit={handleRequestSubmit}
+        />
       )}
     </Container>
   );

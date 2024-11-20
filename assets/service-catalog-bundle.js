@@ -242,15 +242,6 @@ function useItemFormFields(serviceCatalogItem, baseLocale) {
     return { requestFields, handleChange };
 }
 
-const Form = styled.form `
-  display: flex;
-  flex-direction: column;
-  gap: ${(props) => props.theme.space.md};
-`;
-const ItemRequestForm = ({ requestFields, baseLocale, hasAtMentions, userRole, userId, brandId, defaultOrganizationId, handleChange, }) => {
-    return (jsxRuntimeExports.jsx(Form, { children: requestFields.map((field) => (jsxRuntimeExports.jsx(TicketField, { field: field, baseLocale: baseLocale, hasAtMentions: hasAtMentions, userRole: userRole, userId: userId, brandId: brandId, defaultOrganizationId: defaultOrganizationId, handleChange: handleChange }, field.id))) }));
-};
-
 const DescriptionWrapper = styled.div `
   border-bottom: ${(props) => props.theme.borders.sm}
     ${(props) => getColorV8("grey", 300, props.theme)};
@@ -306,6 +297,79 @@ const CollapsibleDescription = ({ title, description, }) => {
                         : t("service-catalog.item.read-more", "Read more"), jsxRuntimeExports.jsx(Button.EndIcon, { children: isExpanded ? jsxRuntimeExports.jsx(SvgChevronUpFill, {}) : jsxRuntimeExports.jsx(SvgChevronDownFill, {}) })] }))] }));
 };
 
+const Form = styled.form `
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: ${(props) => props.theme.space.md};
+
+  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
+    flex-direction: column;
+  }
+`;
+const FieldsContainer = styled.div `
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: ${(props) => props.theme.space.md};
+  margin-right: ${(props) => props.theme.space.xl};
+
+  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
+    margin-right: 0;
+  }
+`;
+const ButtonWrapper = styled.div `
+  flex: 1;
+  margin-left: ${(props) => props.theme.space.xl};
+  padding: ${(props) => props.theme.space.lg};
+  border: ${(props) => props.theme.borders.sm}
+    ${(props) => getColorV8("grey", 300, props.theme)};
+  height: fit-content;
+
+  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
+    position: sticky;
+    top: 0;
+    background: ${(props) => props.theme.colors.background};
+    padding: ${(props) => props.theme.space.lg};
+    border: none;
+    border-top: ${(props) => props.theme.borders.sm}
+      ${(props) => getColorV8("grey", 300, props.theme)};
+    width: 100vw;
+    left: 0;
+    right: 0;
+    margin-left: 0;
+  }
+`;
+const RightColumn = styled.div `
+  flex: 1;
+  margin-left: ${(props) => props.theme.space.xl};
+
+  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
+    position: sticky;
+    bottom: 0;
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+const LeftColumn = styled.div `
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: ${(props) => props.theme.space.lg};
+  margin-right: ${(props) => props.theme.space.xl};
+
+  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
+    margin-right: 0;
+  }
+`;
+function ItemRequestForm({ requestFields, serviceCatalogItem, baseLocale, hasAtMentions, userRole, userId, brandId, defaultOrganizationId, handleChange, onSubmit, }) {
+    const { t } = useTranslation();
+    return (jsxRuntimeExports.jsxs(Form, { onSubmit: onSubmit, children: [jsxRuntimeExports.jsxs(LeftColumn, { children: [jsxRuntimeExports.jsx(CollapsibleDescription, { title: serviceCatalogItem.name, description: serviceCatalogItem.description }), jsxRuntimeExports.jsx(FieldsContainer, { children: requestFields.map((field) => (jsxRuntimeExports.jsx(TicketField, { field: field, baseLocale: baseLocale, hasAtMentions: hasAtMentions, userRole: userRole, userId: userId, brandId: brandId, defaultOrganizationId: defaultOrganizationId, handleChange: handleChange }, field.id))) })] }), jsxRuntimeExports.jsx(RightColumn, { children: jsxRuntimeExports.jsx(ButtonWrapper, { children: jsxRuntimeExports.jsx(Button, { isPrimary: true, size: "large", isStretched: true, type: "submit", children: t("service-catalog.item.submit-button", "Submit request") }) }) })] }));
+}
+
 function useServiceCatalogItem(serviceItemId) {
     const [serviceCatalogItem, setServiceCatalogItem] = reactExports.useState();
     reactExports.useEffect(() => {
@@ -328,6 +392,47 @@ function useServiceCatalogItem(serviceItemId) {
         return undefined;
 }
 
+function useServiceFormSubmit(serviceCatalogItem, requestFields) {
+    const submitServiceItemRequest = async () => {
+        if (!serviceCatalogItem) {
+            return;
+        }
+        console.log("requestFields", requestFields);
+        const currentUserRequest = await fetch("/api/v2/users/me.json");
+        const currentUser = await currentUserRequest.json();
+        const response = await fetch("/api/v2/requests", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": currentUser.user.authenticity_token,
+            },
+            body: JSON.stringify({
+                request: {
+                    subject: "Request for: " + serviceCatalogItem.name,
+                    comment: {
+                        body: serviceCatalogItem.description,
+                    },
+                    ticket_form_id: serviceCatalogItem.form_id,
+                    custom_fields: requestFields.map((field) => {
+                        if (field.type !== "subject" && field.type !== "description") {
+                            return {
+                                id: field.id,
+                                value: field.value,
+                            };
+                        }
+                        else
+                            return;
+                    }),
+                },
+            }),
+        });
+        const data = await response.json();
+        const redirectUrl = "/hc/requests/" + data.request.id;
+        window.location.href = redirectUrl;
+    };
+    return { submitServiceItemRequest };
+}
+
 const Container = styled.div `
   display: flex;
   flex-direction: row;
@@ -338,67 +443,23 @@ const Container = styled.div `
     flex-direction: column;
   }
 `;
-const LeftColumn = styled.div `
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  gap: ${(props) => props.theme.space.lg};
-  margin-right: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    margin-right: 0;
-  }
-`;
-const FromFieldsWrapper = styled.div `
-  margin-right: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    margin-right: 0;
-  }
-`;
-const RightColumn = styled.div `
-  flex: 1;
-  margin-left: ${(props) => props.theme.space.xl};
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    position: sticky;
-    bottom: 0;
-    margin-left: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-`;
-const ButtonWrapper = styled.div `
-  padding: ${(props) => props.theme.space.lg};
-  border: ${(props) => props.theme.borders.sm}
-    ${(props) => getColorV8("grey", 300, props.theme)};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  @media (max-width: ${(props) => props.theme.breakpoints.md}) {
-    position: sticky;
-    top: 0;
-    background: ${(props) => props.theme.colors.background};
-    padding: ${(props) => props.theme.space.lg};
-    border: none;
-    border-top: ${(props) => props.theme.borders.sm}
-      ${(props) => getColorV8("grey", 300, props.theme)};
-    width: 100vw;
-    left: 0;
-    right: 0;
-  }
-`;
 function ServiceCatalogItemPage({ serviceCatalogItemId, baseLocale, hasAtMentions, userRole, organizations, userId, brandId, }) {
     const serviceCatalogItem = useServiceCatalogItem(serviceCatalogItemId);
     const { requestFields, handleChange } = useItemFormFields(serviceCatalogItem, baseLocale);
-    const { t } = useTranslation();
+    const { submitServiceItemRequest } = useServiceFormSubmit(serviceCatalogItem, requestFields);
+    const handleRequestSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await submitServiceItemRequest();
+        }
+        catch (error) {
+            console.error("Error submitting service item request:", error);
+        }
+    };
     const defaultOrganizationId = organizations.length > 0 && organizations[0]?.id
         ? organizations[0]?.id?.toString()
         : null;
-    return (jsxRuntimeExports.jsx(Container, { children: serviceCatalogItem && (jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [jsxRuntimeExports.jsxs(LeftColumn, { children: [jsxRuntimeExports.jsx(CollapsibleDescription, { title: serviceCatalogItem.name, description: serviceCatalogItem.description }), jsxRuntimeExports.jsx(FromFieldsWrapper, { children: jsxRuntimeExports.jsx(ItemRequestForm, { requestFields: requestFields, baseLocale: baseLocale, hasAtMentions: hasAtMentions, userRole: userRole, userId: userId, brandId: brandId, defaultOrganizationId: defaultOrganizationId, handleChange: handleChange }) })] }), jsxRuntimeExports.jsx(RightColumn, { children: jsxRuntimeExports.jsx(ButtonWrapper, { children: jsxRuntimeExports.jsx(Button, { isPrimary: true, size: "large", isStretched: true, children: t("service-catalog.item.submit-button", "Submit request") }) }) })] })) }));
+    return (jsxRuntimeExports.jsx(Container, { children: serviceCatalogItem && (jsxRuntimeExports.jsx(ItemRequestForm, { requestFields: requestFields, serviceCatalogItem: serviceCatalogItem, baseLocale: baseLocale, hasAtMentions: hasAtMentions, userRole: userRole, userId: userId, brandId: brandId, defaultOrganizationId: defaultOrganizationId, handleChange: handleChange, onSubmit: handleRequestSubmit })) }));
 }
 
 async function renderServiceCatalogItem(container, settings, props) {
